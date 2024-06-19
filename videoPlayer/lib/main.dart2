@@ -1,0 +1,121 @@
+import 'package:flutter/material.dart';  
+import 'package:video_player/video_player.dart';  
+  
+void main() {  
+  runApp(MyApp());  
+}  
+  
+class MyApp extends StatelessWidget {  
+  @override  
+  Widget build(BuildContext context) {  
+    return MaterialApp(  
+      title: 'Multi Video Player',  
+      theme: ThemeData(  
+        primarySwatch: Colors.blue,  
+      ),  
+      home: MultiVideoPlayerScreen(),  
+    );  
+  }  
+}  
+  
+class MultiVideoPlayerScreen extends StatefulWidget {  
+  @override  
+  _MultiVideoPlayerScreenState createState() => _MultiVideoPlayerScreenState();  
+}  
+  
+class _MultiVideoPlayerScreenState extends State<MultiVideoPlayerScreen> {  
+  final List<VideoPlayerController> _controllers = [];  
+  
+  @override  
+  void initState() {  
+    super.initState();  
+    // 假设你有两个视频URL  
+    List<String> videoUrls = [
+      // 'assets/video.mp4',  
+      // 'assets/test.mp4',  
+      // 'assets/test2.mkv',
+      // 'assets/test2.mkv',
+      // 'assets/test2.mkv',
+      // 'assets/test2.mkv',
+      // 'assets/video.mp4',  
+      'assets/video.h264',   
+    ];  
+  
+    // 为每个URL初始化VideoPlayerController  
+    for (var url in videoUrls) {  
+      final VideoPlayerController controller = VideoPlayerController.asset(
+        url, 
+        videoPlayerOptions: VideoPlayerOptions(
+        mixWithOthers: true,
+        allowBackgroundPlayback: false,
+      ),);  
+      controller.setLooping(true);
+      _controllers.add(controller);  
+      initializeVideoPlayer(controller);  
+    }  
+  }  
+  
+  Future<void> initializeVideoPlayer(VideoPlayerController controller) async {  
+    try {  
+      await controller.initialize();  
+      // 确保视频已准备好  
+      setState(() {});  
+    } on Exception catch (e) {  
+      print('Error initializing video controller: $e');  
+    }  
+  }  
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Multi Video Player'),
+      ),
+      body: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2, // 设置网格中的列数
+          childAspectRatio: 16 / 9, // 假设你的视频是16:9的比例
+          crossAxisSpacing: 0.0, // 确保没有列间距
+          mainAxisSpacing: 0.0, // 确保没有行间距
+        ),
+        itemCount: _controllers.length,
+        itemBuilder: (context, index) {
+          final VideoPlayerController controller = _controllers[index];
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              AspectRatio(
+                aspectRatio: controller.value.aspectRatio,
+                child: VideoPlayer(controller),
+              ),
+              IconButton(
+                icon: Icon(
+                  controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                  size: 30.0, // 调整按钮大小
+                ),
+                onPressed: () {
+                  if (controller.value.isPlaying) {
+                    controller.pause();
+                  } else {
+                    controller.play();
+                  }
+                  setState(() {}); // 更新UI以反映播放状态
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+
+  @override  
+  void dispose() {  
+    super.dispose();  
+    // 释放所有VideoPlayerController资源  
+    for (var controller in _controllers) {  
+      controller.dispose();  
+    }  
+  }  
+}
